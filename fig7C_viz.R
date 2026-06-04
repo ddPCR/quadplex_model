@@ -29,7 +29,8 @@ Fig7C <- ggplot(corr_data, aes(x=p1111, y=Emax)) +
 
 lm_model <- lm(Emax ~ p1111, data = corr_data)
 summary(lm_model)$adj.r.squared
-
+summary(lm_model)
+confint(lm_model)
 
 ggsave(plot = Fig7C, filename="fig7_corr_panel.svg", path = here::here("manuscript_figures"), create.dir = TRUE, width = 8.5, height=4)
 
@@ -57,6 +58,7 @@ lmm_data <- data.frame(
 
 lmm <- lmer(Emax ~ p1111 + (1|replicate), data=lmm_data)
 summary(lmm)  
+confint(lmm)
 
 #compare both
 
@@ -80,3 +82,37 @@ ggplot(lmm_data, aes(x=p1111, y=Emax, color=UV_min)) +
   geom_line(data=pred_data, aes(x=p1111, y=fit), color="black", size=1, inherit.aes = FALSE) +
   theme_classic2(base_size=12)
 
+
+
+
+lm_ci <- as.data.frame(confint(lm_model))
+colnames(lm_ci) <- c("CI_lower", "CI_upper")
+
+lm_coef <- as.data.frame(summary(lm_model)$coefficients)
+colnames(lm_coef) <- c("Estimate", "Std_Error", "t_value", "p_value")
+
+lm_results <- cbind(
+  Term = rownames(lm_coef),
+  lm_coef,
+  lm_ci
+)
+
+rownames(lm_results) <- NULL
+
+write.csv(lm_results, "LM_results.csv", row.names = FALSE)
+
+
+
+lmm_ci <- as.data.frame(confint(lmm))
+lmm_coef <- as.data.frame(summary(lmm)$coefficients)
+
+lmm_results <- cbind(
+  Term = rownames(lmm_coef),
+  lmm_coef,
+  CI_lower = lmm_ci[rownames(lmm_coef), 1],
+  CI_upper = lmm_ci[rownames(lmm_coef), 2]
+)
+
+rownames(lmm_results) <- NULL
+
+write.csv(lmm_results, "LMM_results.csv", row.names = FALSE)
